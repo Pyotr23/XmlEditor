@@ -10,7 +10,7 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Файл">
                 <MenuItem Header="Выбрать" Command="{Binding ChooseFileCommand}"/>
-                <MenuItem Header="Просмотреть"/>
+                <MenuItem Header="Просмотреть" Command="{Binding OpenFileCommand}"/>
             </MenuItem>            
         </Menu>
         <TextBlock DockPanel.Dock="Top" Text="Исследуемый файл:" Margin="5"/>
@@ -22,6 +22,6 @@
             <Button Content="Удалить" Command="{Binding DeleteSelectedIdCommand}" Margin="5, 0, 5, 5" Width="75"/>
             <Button Content="Удалить всё" Command="{Binding DeleteAllIdsCommand}" Margin="5, 0, 5, 5" Width="75"/>
         </StackPanel>
-        <TextBlock Text="{Binding Info}" FontStyle="Italic" DockPanel.Dock="Bottom" Width="375" Background="LightGray" Padding="5, 0, 5, 0"/>
+        <TextBlock Text="{Binding Info}" FontStyle="Italic" DockPanel.Dock="Bottom" Width="400" Background="LightGray" Padding="5, 0, 5, 0"/>
     </DockPanel>
 </Window>

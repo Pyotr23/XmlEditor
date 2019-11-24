@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.CommandWpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 //using System.Windows.Input;
@@ -32,6 +33,7 @@ namespace XmlEditor.ViewModel
         private string _filePath;
         private string _info;
         private string _selectedBadParameterId;
+        private XmlDocument _xmlDocument = new XmlDocument();
 
         public string SelectedBadParameterId
         {
@@ -71,6 +73,7 @@ namespace XmlEditor.ViewModel
         public RelayCommand ChooseFileCommand { get; private set; }
         public RelayCommand DeleteSelectedIdCommand { get; private set; }
         public RelayCommand DeleteAllIdsCommand { get; private set; }
+        public RelayCommand OpenFileCommand { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
@@ -88,37 +91,80 @@ namespace XmlEditor.ViewModel
 
             ChooseFileCommand = new RelayCommand(ChooseFile);
             DeleteSelectedIdCommand = new RelayCommand(
-                () => BadParameterIds.Remove(SelectedBadParameterId), 
+                () => DeleteSelectedId(SelectedBadParameterId), 
                 () => !(SelectedBadParameterId is null));
             DeleteAllIdsCommand = new RelayCommand(
-                () => BadParameterIds.Clear(),
+                () => DeleteAllBadIds(),
                 () => BadParameterIds.Count != 0);
+            OpenFileCommand = new RelayCommand(
+                () => Process.Start(FilePath),
+                () => File.Exists(FilePath));
         }
 
-        private void RunSurvey()
+        private void DeleteAllBadIds()
         {
-            var dispatcherTimer = new DispatcherTimer();
-            dispatcherTimer.Tick += new EventHandler(ExecuteSurvey);
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
-            dispatcherTimer.Start();
+            XmlElement rootElement = _xmlDocument.DocumentElement;
+            for (int i = 0; i < rootElement.ChildNodes.Count;)
+            {
+                var currentNode = rootElement.ChildNodes[i];
+                string parameterId = currentNode.FirstChild.InnerText;
+                if (currentNode.Name == "ParameterDiscreteSet" && BadParameterIds.Contains(parameterId))
+                {
+                    rootElement.RemoveChild(currentNode);
+                    BadParameterIds.Remove(parameterId);
+                    if (BadParameterIds.Count == 0)
+                    {
+                        _xmlDocument.Save(FilePath);
+                        break;
+                    }
+                }
+                else
+                    i++;
+            }
+            Info = $"Все параметры без описания удалены.";
         }
 
-        private void ExecuteSurvey(object sender, EventArgs e)
+        private void DeleteSelectedId(string deletingId)
         {
-            //CommandManager.InvalidateRequerySuggested();
+            XmlElement rootElement = _xmlDocument.DocumentElement;
+            foreach (XmlNode node in rootElement.ChildNodes)
+            {
+                string parameterId = node.FirstChild.InnerText;
+                if (node.Name == "ParameterDiscreteSet" && parameterId == deletingId)
+                {
+                    rootElement.RemoveChild(node);
+                    _xmlDocument.Save(FilePath);
+                    BadParameterIds.Remove(deletingId);
+                    break;
+                }                    
+            }
+            string idBegining = new string(deletingId.Take(8).ToArray());
+            Info = $"Параметр с Id \"{idBegining}...\" удалён.";
         }
+
+        //private void RunSurvey()
+        //{
+        //    var dispatcherTimer = new DispatcherTimer();
+        //    dispatcherTimer.Tick += new EventHandler(ExecuteSurvey);
+        //    dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+        //    dispatcherTimer.Start();
+        //}
+
+        //private void ExecuteSurvey(object sender, EventArgs e)
+        //{
+        //    CommandManager.InvalidateRequerySuggested();
+        //}
 
         private void RunCalculation(string filePath)
         {
             if (BadParameterIds.Count != 0)
-                BadParameterIds.Clear();
-            XmlDocument document = new XmlDocument();
-            document.Load(filePath);
-            XmlElement rootElement = document.DocumentElement;
+                BadParameterIds.Clear();            
+            _xmlDocument.Load(filePath);
+            XmlElement rootElement = _xmlDocument.DocumentElement;
             var parameterIdHashSet = GetParameterIdHashSet(rootElement);
             int parametersCount = parameterIdHashSet.Count;
             FillBadParameterIdsCollection(rootElement, parameterIdHashSet);
-            Info = $"Обработка окончена. {BadParameterIds.Count} параметров без описания. Всего - {parametersCount}.";
+            Info = $"Обработка окончена. {BadParameterIds.Count} параметров без описания, с описанием - {parametersCount}.";
         }
 
         private void FillBadParameterIdsCollection(XmlElement rootElement, HashSet<string> parameterIdHashSet)
