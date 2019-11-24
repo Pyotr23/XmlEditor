@@ -53,7 +53,7 @@ namespace XmlEditor.ViewModel
             }
         }
 
-        public ObservableCollection<string> BadParameterIds { get; set; }
+        public ObservableCollection<string> BadParameterIds { get; set; } = new ObservableCollection<string>();
 
         public ICommand ChooseFileCommand { get; private set; }
         
@@ -76,27 +76,31 @@ namespace XmlEditor.ViewModel
 
         private void RunCalculation(string filePath)
         {
+            if (BadParameterIds.Count != 0)
+                BadParameterIds.Clear();
             XmlDocument document = new XmlDocument();
             document.Load(filePath);
             XmlElement rootElement = document.DocumentElement;
             var parameterIdHashSet = GetParameterIdHashSet(rootElement);
             int parametersCount = parameterIdHashSet.Count;
-            BadParameterIds = new ObservableCollection<string>(GetBadParameterIds(rootElement, parameterIdHashSet));
+            FillBadParameterIdsCollection(rootElement, parameterIdHashSet);
             Info = $"Обработка окончена. {BadParameterIds.Count} параметров без описания. Всего - {parametersCount}.";
         }
 
-        private static List<string> GetBadParameterIds(XmlElement rootElement, HashSet<string> parameterIdHashSet)
+        private void FillBadParameterIdsCollection(XmlElement rootElement, HashSet<string> parameterIdHashSet)
         {            
             foreach (XmlNode node in rootElement.ChildNodes)
             {
                 string parameterId = node.FirstChild.InnerText;
                 if (node.Name == "Parameters" && parameterIdHashSet.Contains(parameterId))
+                {
                     parameterIdHashSet.Remove(parameterId);
-            }
-            return parameterIdHashSet.ToList();
+                    BadParameterIds.Add(parameterId);
+                }                    
+            }            
         }
 
-        private static HashSet<string> GetParameterIdHashSet(XmlElement rootElement)
+        private HashSet<string> GetParameterIdHashSet(XmlElement rootElement)
         {
             var parameterIdHashSet = new HashSet<string>();
             foreach (XmlNode node in rootElement.ChildNodes)
