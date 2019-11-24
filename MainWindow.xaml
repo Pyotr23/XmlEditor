@@ -15,7 +15,13 @@
         </Menu>
         <TextBlock DockPanel.Dock="Top" Text="Исследуемый файл:" Margin="5"/>
         <TextBox Text="{Binding FilePath}" DockPanel.Dock="Top" Width="Auto" Margin="5, 0, 5, 5"/>
-        <ListBox ItemsSource="{Binding BadParameterIds}"  DockPanel.Dock="Top" Height="50" Margin="5, 0, 5, 5"/>
-        <TextBlock Text="{Binding Info}" FontStyle="Italic" DockPanel.Dock="Bottom" Background="LightGray" Padding="5, 0, 5, 0"/>
+        <TextBlock DockPanel.Dock="Top" Text="Идентификаторы испорченных параметров:" Margin="5"/>
+        <ListBox ItemsSource="{Binding BadParameterIds}" SelectedItem="{Binding SelectedBadParameterId}"  
+                 DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5"/>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+            <Button Content="Удалить" Command="{Binding DeleteSelectedIdCommand}" Margin="5, 0, 5, 5" Width="75"/>
+            <Button Content="Удалить всё" Command="{Binding DeleteAllIdsCommand}" Margin="5, 0, 5, 5" Width="75"/>
+        </StackPanel>
+        <TextBlock Text="{Binding Info}" FontStyle="Italic" DockPanel.Dock="Bottom" Width="375" Background="LightGray" Padding="5, 0, 5, 0"/>
     </DockPanel>
 </Window>
