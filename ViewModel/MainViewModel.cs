@@ -131,20 +131,7 @@ namespace XmlEditor.ViewModel
             string idBegining = new string(deletingId.Take(8).ToArray());
             Info = $"Параметр с Id \"{idBegining}...\" удалён.";
         }
-
-        //private void RunSurvey()
-        //{
-        //    var dispatcherTimer = new DispatcherTimer();
-        //    dispatcherTimer.Tick += new EventHandler(ExecuteSurvey);
-        //    dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
-        //    dispatcherTimer.Start();
-        //}
-
-        //private void ExecuteSurvey(object sender, EventArgs e)
-        //{
-        //    CommandManager.InvalidateRequerySuggested();
-        //}
-
+        
         private void RunCalculation(string filePath)
         {
             if (BadParameterIds.Count != 0)
