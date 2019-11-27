@@ -33,7 +33,8 @@ namespace XmlEditor.ViewModel
         private string _filePath;
         private string _info;
         private string _selectedBadParameterId;
-        private XmlDocument _xmlDocument = new XmlDocument();
+        private Dictionary<string, List<XmlNode>> _nodesDictionary;
+        private XmlDocument _checkingDocument = new XmlDocument();
 
         public string SelectedBadParameterId
         {
@@ -103,37 +104,26 @@ namespace XmlEditor.ViewModel
 
         private void DeleteAllBadIds()
         {
-            XmlElement rootElement = _xmlDocument.DocumentElement;
-            for (int i = 0; i < rootElement.ChildNodes.Count;)
+            while (BadParameterIds.Count > 0)            
             {
-                var currentNode = rootElement.ChildNodes[i];
-                string parameterId = currentNode.FirstChild.InnerText;
-                if (currentNode.Name == "ParameterDiscreteSet" && BadParameterIds.Contains(parameterId))
-                {
-                    rootElement.RemoveChild(currentNode);
-                    BadParameterIds.Remove(parameterId);
-                    if (BadParameterIds.Count == 0)
-                    {
-                        _xmlDocument.Save(FilePath);
-                        break;
-                    }
-                }
-                else
-                    i++;
-            }
+                var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
+                                                  .First(x => x["ParameterId"].InnerText == BadParameterIds[0]);
+                _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
+                BadParameterIds.Remove(BadParameterIds[0]);
+            }            
+            _checkingDocument.Save(FilePath);            
             Info = $"¬се параметры без описани€ удалены.";
         }
 
         private void DeleteSelectedId(string deletingId)
-        {
-            XmlElement rootElement = _xmlDocument.DocumentElement;
-            foreach (XmlNode node in rootElement.ChildNodes)
+        {            
+            foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
             {
-                string parameterId = node.FirstChild.InnerText;
-                if (node.Name == "ParameterDiscreteSet" && parameterId == deletingId)
+                string parameterId = node["ParameterId"].InnerText;
+                if (parameterId == deletingId)
                 {
-                    rootElement.RemoveChild(node);
-                    _xmlDocument.Save(FilePath);
+                    _checkingDocument.DocumentElement.RemoveChild(node);
+                    _checkingDocument.Save(FilePath);
                     BadParameterIds.Remove(deletingId);
                     break;
                 }                    
@@ -158,32 +148,47 @@ namespace XmlEditor.ViewModel
         private void RunCalculation(string filePath)
         {
             if (BadParameterIds.Count != 0)
-                BadParameterIds.Clear();            
-            _xmlDocument.Load(filePath);
-            XmlElement rootElement = _xmlDocument.DocumentElement;
-            var parameterIdHashSet = GetParameterIdHashSet(rootElement);
+                BadParameterIds.Clear();
+
+            _nodesDictionary = GetNodesDictionary(filePath);
+            var parameterIdHashSet = GetParameterIdHashSet();
             int parametersCount = parameterIdHashSet.Count;
-            FillBadParameterIdsCollection(rootElement, parameterIdHashSet);
+            FillBadParameterIdsCollection(parameterIdHashSet);
             Info = $"ќбработка окончена. {BadParameterIds.Count} параметров без описани€, с описанием - {parametersCount}.";
         }
 
-        private void FillBadParameterIdsCollection(XmlElement rootElement, HashSet<string> parameterIdHashSet)
+        private Dictionary<string, List<XmlNode>> GetNodesDictionary(string filePath)
         {            
+            _checkingDocument.Load(filePath);
+            XmlElement rootElement = _checkingDocument.DocumentElement;
+            var xmlNodesDictionary = new Dictionary<string, List<XmlNode>>();
             foreach (XmlNode node in rootElement.ChildNodes)
             {
-                string parameterId = node.FirstChild.InnerText;
-                if (node.Name == "ParameterDiscreteSet" && !parameterIdHashSet.Contains(parameterId))
+                if (xmlNodesDictionary.ContainsKey(node.Name))
+                    xmlNodesDictionary[node.Name].Add(node);
+                else
+                    xmlNodesDictionary.Add(node.Name, new List<XmlNode>() { node });
+            }
+            return xmlNodesDictionary;
+        }
+
+        private void FillBadParameterIdsCollection(HashSet<string> parameterIdHashSet)
+        {            
+            foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
+            {
+                string parameterId = node["ParameterId"].InnerText;
+                if (!parameterIdHashSet.Contains(parameterId))
                     BadParameterIds.Add(parameterId);
             }            
         }
 
-        private HashSet<string> GetParameterIdHashSet(XmlElement rootElement)
+        private HashSet<string> GetParameterIdHashSet()
         {
             var parameterIdHashSet = new HashSet<string>();
-            foreach (XmlNode node in rootElement.ChildNodes)
+            foreach (XmlNode node in _nodesDictionary["Parameters"])
             {
-                string parameterId = node.FirstChild.InnerText;
-                if (node.Name == "Parameters" && !parameterIdHashSet.Contains(parameterId))
+                string parameterId = node["Id"].InnerText;
+                if (!parameterIdHashSet.Contains(parameterId))
                     parameterIdHashSet.Add(parameterId);
             }
             return parameterIdHashSet;
