@@ -6,9 +6,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows;
 //using System.Windows.Input;
 using System.Windows.Threading;
 using System.Xml;
+using XmlEditor.Model;
 using WinForms = System.Windows.Forms;
 
 namespace XmlEditor.ViewModel
@@ -160,13 +162,53 @@ namespace XmlEditor.ViewModel
         }
 
         private void FillBadParameterIdsCollection(HashSet<string> parameterIdHashSet)
-        {            
+        {
+            List<string> badDiscreteSetValueIds = new List<string>();
             foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
             {
                 string parameterId = node["ParameterId"].InnerText;
                 if (!parameterIdHashSet.Contains(parameterId))
+                {
                     BadParameterIds.Add(parameterId);
-            }            
+                    badDiscreteSetValueIds.Add(node["DiscreteSetValueId"].InnerText);
+                }                    
+            }
+
+            var parameterDescreteSets = _nodesDictionary["ParameterDiscreteSet"];
+            var parameterIds = _nodesDictionary["Parameters"].Select(x => x["Id"].InnerText);
+            var badDiscrSetValueIds = parameterDescreteSets
+                .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))                            
+                .Select(x => x["DiscreteSetValueId"].InnerText)
+                .Distinct();
+            var badDiscrSetIds = _nodesDictionary["DiscreteSetValue"]
+                .Where(x => badDiscreteSetValueIds.Contains(x["Id"].InnerText))
+                .Select(x => x["DiscreteSetId"].InnerText);
+            var badSets = _nodesDictionary["DiscreteSet"]
+                .Where(x => badDiscrSetIds.Contains(x["Id"].InnerText))
+                .Select(x => new DiscreteSet() { Id = x["Id"].InnerText, Name = x["Name"].InnerText });
+
+
+            List<string> badDiscreteSetIds = new List<string>();
+            foreach (XmlNode node in _nodesDictionary["DiscreteSetValue"])
+            {
+                if (badDiscreteSetValueIds.Contains(node["Id"].InnerText))
+                {
+                    badDiscreteSetIds.Add(node["DiscreteSetId"].InnerText);                    
+                }
+            }
+
+            List<string> badDiscreteSetName = new List<string>();
+            List<DiscreteSet> discreteSets = new List<DiscreteSet>();
+            foreach (XmlNode node in _nodesDictionary["DiscreteSet"])
+            {
+                if (badDiscreteSetIds.Contains(node["Id"].InnerText))
+                    discreteSets.Add(new DiscreteSet() { Id = node["Id"].InnerText, Name = node["Name"].InnerText });
+                    //badDiscreteSetName.Add(node["Name"].InnerText);
+            }
+
+            MessageBox.Show($"DiscreteSetValueIds:\n{string.Join("\n", badDiscreteSetValueIds.Distinct())}\n\n" +
+                $"DiscreteSetIds:\n{string.Join("\n", discreteSets.Select(x => x.Id).ToArray())}\n\n" +
+                $"DiscreteSetNames:\n{string.Join("\n", discreteSets.Select(s => s.Name).ToArray())}");
         }
 
         private HashSet<string> GetParameterIdHashSet()
@@ -194,6 +236,6 @@ namespace XmlEditor.ViewModel
                 if (result == WinForms.DialogResult.OK)
                     FilePath = dialog.FileName;                
             }
-        }
+        }         
     }
 }
