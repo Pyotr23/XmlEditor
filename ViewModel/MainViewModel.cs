@@ -175,18 +175,21 @@ namespace XmlEditor.ViewModel
             }
 
             var parameterDescreteSets = _nodesDictionary["ParameterDiscreteSet"];
-            var parameterIds = _nodesDictionary["Parameters"].Select(x => x["Id"].InnerText);
+            var parameters = _nodesDictionary["Parameters"];
+            var parameterIds = parameters.Select(x => x["Id"].InnerText);
+            var badParameterIds = parameterDescreteSets
+                .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))
+                .Select((p, i) => new { Identity = i, ParameterId = p["ParameterId"].InnerText });
             var badDiscrSetValueIds = parameterDescreteSets
                 .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))                            
-                .Select(x => x["DiscreteSetValueId"].InnerText)
-                .Distinct();
+                .Select((x, i) => new { Identity = i, SetValueId = x["DiscreteSetValueId"].InnerText }); // Identity выкинуть
             var badDiscrSetIds = _nodesDictionary["DiscreteSetValue"]
-                .Where(x => badDiscreteSetValueIds.Contains(x["Id"].InnerText))
+                .Where(x => badDiscrSetValueIds.Select(y => y.SetValueId).Contains(x["Id"].InnerText))
                 .Select(x => x["DiscreteSetId"].InnerText);
             var badSets = _nodesDictionary["DiscreteSet"]
                 .Where(x => badDiscrSetIds.Contains(x["Id"].InnerText))
-                .Select(x => new DiscreteSet() { Id = x["Id"].InnerText, Name = x["Name"].InnerText });
-
+                .Select((x, i) => new { Identity = i, Id = x["Id"].InnerText, Name = x["Name"].InnerText })
+                .Join(badParameterIds, x => x.Identity, y => y.Identity, (x, y) => new { y.ParameterId, x.Id, x.Name });
 
             List<string> badDiscreteSetIds = new List<string>();
             foreach (XmlNode node in _nodesDictionary["DiscreteSetValue"])
