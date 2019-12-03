@@ -16,8 +16,10 @@
         <TextBlock DockPanel.Dock="Top" Text="Исследуемый файл:" Margin="5"/>
         <TextBox Text="{Binding FilePath}" DockPanel.Dock="Top" Width="Auto" Margin="5, 0, 5, 5"/>
         <TextBlock DockPanel.Dock="Top" Text="Идентификаторы испорченных параметров:" Margin="5"/>
-        <ListBox ItemsSource="{Binding BadParameterIds}" SelectedItem="{Binding SelectedBadParameterId}"  
-                 DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5"/>
+        <DataGrid DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5" ItemsSource="{Binding BadDiscreteSets}" 
+                  AutoGenerateColumns="True"/>
+        <!--<ListBox ItemsSource="{Binding BadParameterIds}" SelectedItem="{Binding SelectedBadParameterId}"  
+                 DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5"/>-->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Button Content="Удалить" Command="{Binding DeleteSelectedIdCommand}" Margin="5, 0, 5, 5" Width="75"/>
             <Button Content="Удалить всё" Command="{Binding DeleteAllIdsCommand}" Margin="5, 0, 5, 5" Width="75"/>

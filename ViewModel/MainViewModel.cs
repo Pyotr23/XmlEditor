@@ -71,7 +71,7 @@ namespace XmlEditor.ViewModel
             }
         }
 
-        public ObservableCollection<string> BadParameterIds { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<DiscreteSet> BadDiscreteSets { get; set; } = new ObservableCollection<DiscreteSet>();
 
         public RelayCommand ChooseFileCommand { get; private set; }
         public RelayCommand DeleteSelectedIdCommand { get; private set; }
@@ -98,7 +98,7 @@ namespace XmlEditor.ViewModel
                 () => !(SelectedBadParameterId is null));
             DeleteAllIdsCommand = new RelayCommand(
                 () => DeleteAllBadIds(),
-                () => BadParameterIds.Count != 0);
+                () => BadDiscreteSets.Count != 0);
             OpenFileCommand = new RelayCommand(
                 () => Process.Start(FilePath),
                 () => File.Exists(FilePath));
@@ -106,12 +106,12 @@ namespace XmlEditor.ViewModel
 
         private void DeleteAllBadIds()
         {
-            while (BadParameterIds.Count > 0)            
+            while (BadDiscreteSets.Count > 0)            
             {
                 var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
-                                                  .First(x => x["ParameterId"].InnerText == BadParameterIds[0]);
+                                                  .First(x => x["ParameterId"].InnerText == BadDiscreteSets[0].ParameterId);
                 _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
-                BadParameterIds.Remove(BadParameterIds[0]);
+                BadDiscreteSets.Remove(BadDiscreteSets[0]);
             }            
             _checkingDocument.Save(FilePath);            
             Info = $"Все параметры без описания удалены.";
@@ -119,31 +119,31 @@ namespace XmlEditor.ViewModel
 
         private void DeleteSelectedId(string deletingId)
         {            
-            foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
-            {
-                string parameterId = node["ParameterId"].InnerText;
-                if (parameterId == deletingId)
-                {
-                    _checkingDocument.DocumentElement.RemoveChild(node);
-                    _checkingDocument.Save(FilePath);
-                    BadParameterIds.Remove(deletingId);
-                    break;
-                }                    
-            }
-            string idBegining = new string(deletingId.Take(8).ToArray());
-            Info = $"Параметр с Id \"{idBegining}...\" удалён.";
+            //foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
+            //{
+            //    string parameterId = node["ParameterId"].InnerText;
+            //    if (parameterId == deletingId)
+            //    {
+            //        _checkingDocument.DocumentElement.RemoveChild(node);
+            //        _checkingDocument.Save(FilePath);
+            //        BadDiscreteSets.Remove(deletingId);
+            //        break;
+            //    }                    
+            //}
+            //string idBegining = new string(deletingId.Take(8).ToArray());
+            //Info = $"Параметр с Id \"{idBegining}...\" удалён.";
         }
         
         private void RunCalculation(string filePath)
         {
-            if (BadParameterIds.Count != 0)
-                BadParameterIds.Clear();
+            if (BadDiscreteSets.Count != 0)
+                BadDiscreteSets.Clear();
 
             _nodesDictionary = GetNodesDictionary(filePath);
             var parameterIdHashSet = GetParameterIdHashSet();
             int parametersCount = parameterIdHashSet.Count;
             FillBadParameterIdsCollection(parameterIdHashSet);
-            Info = $"Обработка окончена. {BadParameterIds.Count} параметров без описания, с описанием - {parametersCount}.";
+            Info = $"Обработка окончена. {BadDiscreteSets.Count} параметров без описания, с описанием - {parametersCount}.";
         }
 
         private Dictionary<string, List<XmlNode>> GetNodesDictionary(string filePath)
@@ -196,13 +196,13 @@ namespace XmlEditor.ViewModel
             //    .Where((x, i) => badDiscreteSetValueIds.Contains(x["Id"].InnerText))
             //    .Select(x => x["DiscreteSetId"].InnerText);
 
-            var badSets = new ObservableCollection<DiscreteSet>();
+            
 
             badDiscreteSetIds.ForEach(b =>
             {
                 var badDiscreteSetNode = _nodesDictionary["DiscreteSet"]
                                             .FirstOrDefault(x => x["Id"].InnerText == b);
-                badSets.Add(new DiscreteSet() 
+                BadDiscreteSets.Add(new DiscreteSet() 
                 { 
                     ParameterId = badParameterIds[0], 
                     Id = badDiscreteSetNode["Id"].InnerText,

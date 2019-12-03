@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace XmlEditor.Model
 {
-    class DiscreteSet
+    public class DiscreteSet
     {
         public string ParameterId { get; set; }
         public string Id { get; set; }
