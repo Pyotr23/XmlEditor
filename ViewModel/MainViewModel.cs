@@ -163,55 +163,80 @@ namespace XmlEditor.ViewModel
 
         private void FillBadParameterIdsCollection(HashSet<string> parameterIdHashSet)
         {
-            List<string> badDiscreteSetValueIds = new List<string>();
-            foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
-            {
-                string parameterId = node["ParameterId"].InnerText;
-                if (!parameterIdHashSet.Contains(parameterId))
-                {
-                    BadParameterIds.Add(parameterId);
-                    badDiscreteSetValueIds.Add(node["DiscreteSetValueId"].InnerText);
-                }                    
-            }
+            //List<string> badDiscreteSetValueIds = new List<string>();
+            //foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
+            //{
+            //    string parameterId = node["ParameterId"].InnerText;
+            //    if (!parameterIdHashSet.Contains(parameterId))
+            //    {
+            //        BadParameterIds.Add(parameterId);
+            //        badDiscreteSetValueIds.Add(node["DiscreteSetValueId"].InnerText);
+            //    }                    
+            //}
 
             var parameterDescreteSets = _nodesDictionary["ParameterDiscreteSet"];
             var parameters = _nodesDictionary["Parameters"];
             var parameterIds = parameters.Select(x => x["Id"].InnerText);
             var badParameterIds = parameterDescreteSets
                 .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))
-                .Select((p, i) => new { Identity = i, ParameterId = p["ParameterId"].InnerText });
-            var badDiscrSetValueIds = parameterDescreteSets
+                .Select(p => p["ParameterId"].InnerText)
+                .ToList();
+            var badDiscreteSetValueIds = parameterDescreteSets
                 .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))                            
-                .Select((x, i) => new { Identity = i, SetValueId = x["DiscreteSetValueId"].InnerText }); // Identity выкинуть
-            var badDiscrSetIds = _nodesDictionary["DiscreteSetValue"]
-                .Where(x => badDiscrSetValueIds.Select(y => y.SetValueId).Contains(x["Id"].InnerText))
-                .Select(x => x["DiscreteSetId"].InnerText);
-            var badSets = _nodesDictionary["DiscreteSet"]
-                .Where(x => badDiscrSetIds.Contains(x["Id"].InnerText))
-                .Select((x, i) => new { Identity = i, Id = x["Id"].InnerText, Name = x["Name"].InnerText })
-                .Join(badParameterIds, x => x.Identity, y => y.Identity, (x, y) => new { y.ParameterId, x.Id, x.Name });
-
-            List<string> badDiscreteSetIds = new List<string>();
-            foreach (XmlNode node in _nodesDictionary["DiscreteSetValue"])
+                .Select(x => x["DiscreteSetValueId"].InnerText)
+                .ToList();
+            var badDiscreteSetIds = new List<string>();
+            badDiscreteSetValueIds.ForEach(d =>
             {
-                if (badDiscreteSetValueIds.Contains(node["Id"].InnerText))
-                {
-                    badDiscreteSetIds.Add(node["DiscreteSetId"].InnerText);                    
-                }
-            }
+                badDiscreteSetIds.Add
+                    (_nodesDictionary["DiscreteSetValue"]
+                        .FirstOrDefault(x => x["Id"].InnerText == d)["DiscreteSetId"].InnerText);
+            });
+            //var badDiscrSetIds = _nodesDictionary["DiscreteSetValue"]
+            //    .Where((x, i) => badDiscreteSetValueIds.Contains(x["Id"].InnerText))
+            //    .Select(x => x["DiscreteSetId"].InnerText);
 
-            List<string> badDiscreteSetName = new List<string>();
-            List<DiscreteSet> discreteSets = new List<DiscreteSet>();
-            foreach (XmlNode node in _nodesDictionary["DiscreteSet"])
+            var badSets = new ObservableCollection<DiscreteSet>();
+
+            badDiscreteSetIds.ForEach(b =>
             {
-                if (badDiscreteSetIds.Contains(node["Id"].InnerText))
-                    discreteSets.Add(new DiscreteSet() { Id = node["Id"].InnerText, Name = node["Name"].InnerText });
-                    //badDiscreteSetName.Add(node["Name"].InnerText);
-            }
+                var badDiscreteSetNode = _nodesDictionary["DiscreteSet"]
+                                            .FirstOrDefault(x => x["Id"].InnerText == b);
+                badSets.Add(new DiscreteSet() 
+                { 
+                    ParameterId = badParameterIds[0], 
+                    Id = badDiscreteSetNode["Id"].InnerText,
+                    Name = badDiscreteSetNode["Name"].InnerText
+                });
+                badParameterIds.RemoveAt(0);
+            });
 
-            MessageBox.Show($"DiscreteSetValueIds:\n{string.Join("\n", badDiscreteSetValueIds.Distinct())}\n\n" +
-                $"DiscreteSetIds:\n{string.Join("\n", discreteSets.Select(x => x.Id).ToArray())}\n\n" +
-                $"DiscreteSetNames:\n{string.Join("\n", discreteSets.Select(s => s.Name).ToArray())}");
+            //var badSets2 = _nodesDictionary["DiscreteSet"]
+            //    .Where(x => badDiscrSetIds.Contains(x["Id"].InnerText))
+            //    .Select((x, i) => new { Identity = i, Id = x["Id"].InnerText, Name = x["Name"].InnerText })
+            //    .Join(badParameterIds, x => x.Identity, y => y.Identity, (x, y) => new { y.ParameterId, x.Id, x.Name });
+
+            //List<string> badDiscreteSetIds = new List<string>();
+            //foreach (XmlNode node in _nodesDictionary["DiscreteSetValue"])
+            //{
+            //    if (badDiscreteSetValueIds.Contains(node["Id"].InnerText))
+            //    {
+            //        badDiscreteSetIds.Add(node["DiscreteSetId"].InnerText);                    
+            //    }
+            //}
+
+            //List<string> badDiscreteSetName = new List<string>();
+            //List<DiscreteSet> discreteSets = new List<DiscreteSet>();
+            //foreach (XmlNode node in _nodesDictionary["DiscreteSet"])
+            //{
+            //    if (badDiscreteSetIds.Contains(node["Id"].InnerText))
+            //        discreteSets.Add(new DiscreteSet() { Id = node["Id"].InnerText, Name = node["Name"].InnerText });
+            //        //badDiscreteSetName.Add(node["Name"].InnerText);
+            //}
+
+            //MessageBox.Show($"DiscreteSetValueIds:\n{string.Join("\n", badDiscreteSetValueIds.Distinct())}\n\n" +
+            //    $"DiscreteSetIds:\n{string.Join("\n", discreteSets.Select(x => x.Id).ToArray())}\n\n" +
+            //    $"DiscreteSetNames:\n{string.Join("\n", discreteSets.Select(s => s.Name).ToArray())}");
         }
 
         private HashSet<string> GetParameterIdHashSet()

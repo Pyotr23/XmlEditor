@@ -8,6 +8,7 @@ namespace XmlEditor.Model
 {
     class DiscreteSet
     {
+        public string ParameterId { get; set; }
         public string Id { get; set; }
         public string Name { get; set; }
     }
