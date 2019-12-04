@@ -106,15 +106,15 @@ namespace XmlEditor.ViewModel
 
         private void DeleteAllBadIds()
         {
-            while (BadDiscreteSets.Count > 0)            
-            {
-                var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
-                                                  .First(x => x["ParameterId"].InnerText == BadDiscreteSets[0].ParameterId);
-                _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
-                BadDiscreteSets.Remove(BadDiscreteSets[0]);
-            }            
-            _checkingDocument.Save(FilePath);            
-            Info = $"Все параметры без описания удалены.";
+            //while (BadDiscreteSets.Count > 0)            
+            //{
+            //    var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
+            //                                      .First(x => x["ParameterId"].InnerText == BadDiscreteSets[0].ParameterId);
+            //    _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
+            //    BadDiscreteSets.Remove(BadDiscreteSets[0]);
+            //}            
+            //_checkingDocument.Save(FilePath);            
+            //Info = $"Все параметры без описания удалены.";
         }
 
         private void DeleteSelectedId(string deletingId)
@@ -173,18 +173,20 @@ namespace XmlEditor.ViewModel
             //        badDiscreteSetValueIds.Add(node["DiscreteSetValueId"].InnerText);
             //    }                    
             //}
+                                 
+            var parameterIds = _nodesDictionary["Parameters"].Select(x => x["Id"].InnerText);
 
-            var parameterDescreteSets = _nodesDictionary["ParameterDiscreteSet"];
-            var parameters = _nodesDictionary["Parameters"];
-            var parameterIds = parameters.Select(x => x["Id"].InnerText);
-            var badParameterIds = parameterDescreteSets
-                .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))
-                .Select(p => p["ParameterId"].InnerText)
-                .ToList();
-            var badDiscreteSetValueIds = parameterDescreteSets
-                .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText))                            
-                .Select(x => x["DiscreteSetValueId"].InnerText)
-                .ToList();
+            var badParameterDiscreteSets = _nodesDictionary["ParameterDiscreteSet"]
+                                                .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText));
+
+            var badParameterIds = badParameterDiscreteSets                
+                                    .Select(p => p["ParameterId"].InnerText)
+                                    .ToList();
+
+            var badDiscreteSetValueIds = badParameterDiscreteSets                                            
+                                    .Select(x => x["DiscreteSetValueId"].InnerText)
+                                    .ToList();
+
             var badDiscreteSetIds = new List<string>();
             badDiscreteSetValueIds.ForEach(d =>
             {
@@ -192,24 +194,37 @@ namespace XmlEditor.ViewModel
                     (_nodesDictionary["DiscreteSetValue"]
                         .FirstOrDefault(x => x["Id"].InnerText == d)["DiscreteSetId"].InnerText);
             });
-            //var badDiscrSetIds = _nodesDictionary["DiscreteSetValue"]
-            //    .Where((x, i) => badDiscreteSetValueIds.Contains(x["Id"].InnerText))
-            //    .Select(x => x["DiscreteSetId"].InnerText);
 
-            
-
-            badDiscreteSetIds.ForEach(b =>
+            for (int i = 0; i < badDiscreteSetIds.Count; i++)
             {
                 var badDiscreteSetNode = _nodesDictionary["DiscreteSet"]
-                                            .FirstOrDefault(x => x["Id"].InnerText == b);
-                BadDiscreteSets.Add(new DiscreteSet() 
-                { 
-                    ParameterId = badParameterIds[0], 
-                    Id = badDiscreteSetNode["Id"].InnerText,
-                    Name = badDiscreteSetNode["Name"].InnerText
-                });
-                badParameterIds.RemoveAt(0);
-            });
+                                            .FirstOrDefault(x => x["Id"].InnerText == badDiscreteSetIds[i]);
+                if (!BadDiscreteSets.Select(x => x.Id).ToList().Contains(badDiscreteSetNode["Id"].InnerText))
+                    BadDiscreteSets.Add(new DiscreteSet() 
+                    { 
+                        Id = badDiscreteSetNode["Id"].InnerText,
+                        Name = badDiscreteSetNode["Name"].InnerText,
+                        ParameterIds = new List<string>() { badParameterIds[i] }
+                    });
+                else
+                {
+                    var existingBadDiscreteSet = BadDiscreteSets.First(x => x.Id == badDiscreteSetNode["Id"].InnerText);
+                    existingBadDiscreteSet.ParameterIds.Add(badParameterIds[i]);
+                }
+            }
+
+            //badDiscreteSetIds.ForEach(b =>
+            //{
+            //    var badDiscreteSetNode = _nodesDictionary["DiscreteSet"]
+            //                                .FirstOrDefault(x => x["Id"].InnerText == b);
+            //    BadDiscreteSets.Add(new DiscreteSet() 
+            //    { 
+            //        ParameterId = badParameterIds[0], 
+            //        Id = badDiscreteSetNode["Id"].InnerText,
+            //        Name = badDiscreteSetNode["Name"].InnerText
+            //    });
+            //    badParameterIds.RemoveAt(0);
+            //});
 
             //var badSets2 = _nodesDictionary["DiscreteSet"]
             //    .Where(x => badDiscrSetIds.Contains(x["Id"].InnerText))
