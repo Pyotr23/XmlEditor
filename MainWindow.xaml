@@ -16,10 +16,30 @@
         <TextBlock DockPanel.Dock="Top" Text="Исследуемый файл:" Margin="5"/>
         <TextBox Text="{Binding FilePath}" DockPanel.Dock="Top" Width="Auto" Margin="5, 0, 5, 5"/>
         <TextBlock DockPanel.Dock="Top" Text="Идентификаторы испорченных параметров:" Margin="5"/>
-        <DataGrid DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5" ItemsSource="{Binding BadDiscreteSets}" 
-                  AutoGenerateColumns="True"/>
-        <!--<ListBox ItemsSource="{Binding BadParameterIds}" SelectedItem="{Binding SelectedBadParameterId}"  
-                 DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5"/>-->
+        <ListBox ItemsSource="{Binding BadDiscreteSets}" DockPanel.Dock="Top" Height="125" Margin="5, 0, 5, 5">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Focusable" Value="false"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>                 
+                <DataTemplate>                    
+                    <Border BorderThickness="1" BorderBrush="Black" CornerRadius="3">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="DiscreteSet"/>
+                                <TextBox Text="{Binding Id}"/>
+                                <TextBox Text="{Binding Name}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="ParameterIds"/>
+                                <ListBox ItemsSource="{Binding ParameterIds}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Button Content="Удалить" Command="{Binding DeleteSelectedIdCommand}" Margin="5, 0, 5, 5" Width="75"/>
             <Button Content="Удалить всё" Command="{Binding DeleteAllIdsCommand}" Margin="5, 0, 5, 5" Width="75"/>

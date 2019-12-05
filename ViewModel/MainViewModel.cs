@@ -142,7 +142,7 @@ namespace XmlEditor.ViewModel
             _nodesDictionary = GetNodesDictionary(filePath);
             var parameterIdHashSet = GetParameterIdHashSet();
             int parametersCount = parameterIdHashSet.Count;
-            FillBadParameterIdsCollection(parameterIdHashSet);
+            FillBadDiscreteSets();
             Info = $"Обработка окончена. {BadDiscreteSets.Count} параметров без описания, с описанием - {parametersCount}.";
         }
 
@@ -161,7 +161,7 @@ namespace XmlEditor.ViewModel
             return xmlNodesDictionary;
         }
 
-        private void FillBadParameterIdsCollection(HashSet<string> parameterIdHashSet)
+        private void FillBadDiscreteSets()
         {
             //List<string> badDiscreteSetValueIds = new List<string>();
             //foreach (XmlNode node in _nodesDictionary["ParameterDiscreteSet"])
