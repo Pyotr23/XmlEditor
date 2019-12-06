@@ -38,6 +38,18 @@ namespace XmlEditor.ViewModel
         private Dictionary<string, List<XmlNode>> _nodesDictionary;
         private XmlDocument _checkingDocument = new XmlDocument();
 
+        private DiscreteSet _SelDs;
+        public DiscreteSet SelDs
+        {
+            get => _SelDs;
+            set
+            {
+                _SelDs = value;
+                RaisePropertyChanged(nameof(SelDs));
+                MessageBox.Show("Выбрал!!!");
+            }
+        }
+
         public string SelectedBadParameterId
         {
             get => _selectedBadParameterId;
