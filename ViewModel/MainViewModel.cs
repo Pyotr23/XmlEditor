@@ -1,4 +1,4 @@
-using GalaSoft.MvvmLight;
+п»їusing GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using System;
 using System.Collections.Generic;
@@ -29,8 +29,8 @@ namespace XmlEditor.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
-        private const string ProcessedMessage = "Идёт обработка...";
-        private const string ErrorFileMessage = "Выберите XML-файл.";
+        private const string ProcessedMessage = "РРґС‘С‚ РѕР±СЂР°Р±РѕС‚РєР°...";
+        private const string ErrorFileMessage = "Р’С‹Р±РµСЂРёС‚Рµ XML-С„Р°Р№Р».";
 
         private string _filePath;
         private string _info;
@@ -65,11 +65,7 @@ namespace XmlEditor.ViewModel
             {
                 _filePath = value;
                 RaisePropertyChanged(nameof(FilePath));                
-                Info = GetCheckingPathResult(value);
-                if (Info == ProcessedMessage)
-                    RunCalculation();
-                int parametersCount = _nodesDictionary["Parameters"].Count;
-                Info = $"Обработка окончена. {BadDiscreteSets.Count} параметров без описания, с описанием - {parametersCount}.";
+                RunCalculation();
             }
         }
 
@@ -114,13 +110,12 @@ namespace XmlEditor.ViewModel
                 {
                     var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
                                                     .Single(x => x["ParameterId"].InnerText == BadDiscreteSets[0].ParameterIds[0]);
-                    _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
+                    RemoveFirstGenerationXmlNode(badParameterDiscreteSet);
                     BadDiscreteSets[0].ParameterIds.RemoveAt(0);
                 }
                 BadDiscreteSets.Remove(BadDiscreteSets[0]);
             }
-            _checkingDocument.Save(FilePath);
-            Info = $"Все параметры без описания удалены.";
+            Info = $"Р’СЃРµ РїР°СЂР°РјРµС‚СЂС‹ Р±РµР· РѕРїРёСЃР°РЅРёСЏ СѓРґР°Р»РµРЅС‹.";
         }
 
         private void DeleteSelectedId()
@@ -128,8 +123,8 @@ namespace XmlEditor.ViewModel
             string deletingId = SelectedBadParameterId;
             var badParameterDiscreteSet = _nodesDictionary["ParameterDiscreteSet"]
                                                     .Single(x => x["ParameterId"].InnerText == SelectedBadParameterId);
-            _checkingDocument.DocumentElement.RemoveChild(badParameterDiscreteSet);
-            _checkingDocument.Save(FilePath);
+            RemoveFirstGenerationXmlNode(badParameterDiscreteSet);
+
             var selectedBadDiscreteSet = BadDiscreteSets.First(x => x.ParameterIds.Contains(deletingId));
             if (selectedBadDiscreteSet.ParameterIds.Count == 1)
                 BadDiscreteSets.Remove(selectedBadDiscreteSet);
@@ -137,14 +132,26 @@ namespace XmlEditor.ViewModel
                 BadDiscreteSets.First(x => x == selectedBadDiscreteSet).ParameterIds.Remove(SelectedBadParameterId);
 
             SelectedBadParameterId = null;
+
             string idBegining = new string(deletingId.Take(8).ToArray());
-            Info = $"Параметр с Id \"{idBegining}...\" удалён.";
+            Info = $"РџР°СЂР°РјРµС‚СЂ СЃ Id \"{idBegining}...\" СѓРґР°Р»С‘РЅ.";
+        }
+
+        private void RemoveFirstGenerationXmlNode(XmlNode removingXmlNode)
+        {
+            _checkingDocument.DocumentElement.RemoveChild(removingXmlNode);
+            _checkingDocument.Save(FilePath);
         }
         
         private void RunCalculation()
         {
-            _nodesDictionary = GetNodesDictionary(FilePath);            
-            FillBadDiscreteSets();            
+            Info = GetCheckingPathResult(FilePath);
+            if (Info == ErrorFileMessage)
+                return;
+            _nodesDictionary = GetNodesDictionary(FilePath);
+            FillBadDiscreteSets();
+            int parametersCount = _nodesDictionary["Parameters"].Count;
+            Info = $"РћР±СЂР°Р±РѕС‚РєР° РѕРєРѕРЅС‡РµРЅР°. {BadDiscreteSets.Count} РїР°СЂР°РјРµС‚СЂРѕРІ Р±РµР· РѕРїРёСЃР°РЅРёСЏ, СЃ РѕРїРёСЃР°РЅРёРµРј - {parametersCount}.";
         }
 
         private Dictionary<string, List<XmlNode>> GetNodesDictionary(string filePath)
@@ -165,24 +172,24 @@ namespace XmlEditor.ViewModel
         private void FillBadDiscreteSets()
         {
             BadDiscreteSets.Clear();
-            // Идентификаторы всех параметров.
+            // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РІСЃРµС… РїР°СЂР°РјРµС‚СЂРѕРІ.
             var parameterIds = _nodesDictionary["Parameters"].Select(x => x["Id"].InnerText);
 
-            // ParameterDiscreteSets, идентификаторов параметров которых нет в идентификаторах всех параметрах.
+            // ParameterDiscreteSets, РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РїР°СЂР°РјРµС‚СЂРѕРІ РєРѕС‚РѕСЂС‹С… РЅРµС‚ РІ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°С… РІСЃРµС… РїР°СЂР°РјРµС‚СЂР°С….
             var badParameterDiscreteSets = _nodesDictionary["ParameterDiscreteSet"]
                                                 .Where(x => !parameterIds.Contains(x["ParameterId"].InnerText));
 
-            // Идентификаторы параметров badDiscreteSets.
+            // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РїР°СЂР°РјРµС‚СЂРѕРІ badDiscreteSets.
             var badParameterIds = badParameterDiscreteSets                
                                     .Select(p => p["ParameterId"].InnerText)
                                     .ToList();
 
-            // Идентификаторы значений дискретных наборов badParameterDiscreteSets.
+            // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ Р·РЅР°С‡РµРЅРёР№ РґРёСЃРєСЂРµС‚РЅС‹С… РЅР°Р±РѕСЂРѕРІ badParameterDiscreteSets.
             var badDiscreteSetValueIds = badParameterDiscreteSets                                            
                                     .Select(x => x["DiscreteSetValueId"].InnerText)
                                     .ToList();
 
-            // Идентификаторы дискретных наборов, соответствующие badDiscreteSetValueIds.
+            // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РґРёСЃРєСЂРµС‚РЅС‹С… РЅР°Р±РѕСЂРѕРІ, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ badDiscreteSetValueIds.
             var badDiscreteSetIds = new List<string>();
             badDiscreteSetValueIds.ForEach(d =>
             {
@@ -191,8 +198,8 @@ namespace XmlEditor.ViewModel
                         .FirstOrDefault(x => x["Id"].InnerText == d)["DiscreteSetId"].InnerText);
             });
 
-            // Здесь формируется соответствие "ParameterId" - "DiscreteSetId и DiscreteSetName". ParameterId собираются в список для
-            // каждой пары "DiscreteSetId и DiscreteSetName".
+            // Р—РґРµСЃСЊ С„РѕСЂРјРёСЂСѓРµС‚СЃСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ "ParameterId" - "DiscreteSetId Рё DiscreteSetName". ParameterId СЃРѕР±РёСЂР°СЋС‚СЃСЏ РІ СЃРїРёСЃРѕРє РґР»СЏ
+            // РєР°Р¶РґРѕР№ РїР°СЂС‹ "DiscreteSetId Рё DiscreteSetName".
             for (int i = 0; i < badDiscreteSetIds.Count; i++)
             {
                 var badDiscreteSetNode = _nodesDictionary["DiscreteSet"]
