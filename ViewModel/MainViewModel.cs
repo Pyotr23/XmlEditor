@@ -73,7 +73,7 @@ namespace XmlEditor.ViewModel
             }
         }
 
-        public ObservableCollection<DiscreteSet> BadDiscreteSets { get; set; } = new ObservableCollection<DiscreteSet>();
+        public ObservableCollection<DiscreteSet> BadDiscreteSets { get; set; } = new ObservableCollection<DiscreteSet>();        
 
         public RelayCommand ChooseFileCommand { get; private set; }
         public RelayCommand DeleteSelectedIdCommand { get; private set; }
@@ -134,11 +134,8 @@ namespace XmlEditor.ViewModel
             if (selectedBadDiscreteSet.ParameterIds.Count == 1)
                 BadDiscreteSets.Remove(selectedBadDiscreteSet);
             else
-            {                
                 BadDiscreteSets.First(x => x == selectedBadDiscreteSet).ParameterIds.Remove(SelectedBadParameterId);
-                RunCalculation();
-            }                 
-            
+
             SelectedBadParameterId = null;
             string idBegining = new string(deletingId.Take(8).ToArray());
             Info = $"Параметр с Id \"{idBegining}...\" удалён.";
@@ -205,7 +202,7 @@ namespace XmlEditor.ViewModel
                     { 
                         Id = badDiscreteSetNode["Id"].InnerText,
                         Name = badDiscreteSetNode["Name"].InnerText,
-                        ParameterIds = new List<string>() { badParameterIds[i] }
+                        ParameterIds = new ObservableCollection<string>() { badParameterIds[i] }
                     });
                 else
                 {
