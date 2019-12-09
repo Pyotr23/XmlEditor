@@ -151,7 +151,8 @@ namespace XmlEditor.ViewModel
             _nodesDictionary = GetNodesDictionary(FilePath);
             FillBadDiscreteSets();
             int parametersCount = _nodesDictionary["Parameters"].Count;
-            Info = $"Обработка окончена. {BadDiscreteSets.Count} параметров без описания, с описанием - {parametersCount}.";
+            Info = $"Обработка окончена. {BadDiscreteSets.Sum(x => x.ParameterIds.Count)} параметров без описания," +
+                $" с описанием - {parametersCount}.";
         }
 
         private Dictionary<string, List<XmlNode>> GetNodesDictionary(string filePath)
