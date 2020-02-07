@@ -6,9 +6,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
-//using System.Windows.Input;
-using System.Windows.Threading;
+using System.Text.RegularExpressions;
 using System.Xml;
 using XmlEditor.Model;
 using WinForms = System.Windows.Forms;
@@ -148,16 +146,32 @@ namespace XmlEditor.ViewModel
             Info = GetCheckingPathResult(FilePath);
             if (Info == ErrorFileMessage)
                 return;
-            _nodesDictionary = GetNodesDictionary(FilePath);
+            try
+            {
+                _checkingDocument.Load(FilePath);
+            }
+            catch (Exception ex)
+            {
+                Info = $"Загрузка файла не удалась. Ошибка в строке {GetErrorRowNumber(ex.Message)}.";
+                return;
+            }
+            
+            _nodesDictionary = GetNodesDictionary();
             FillBadDiscreteSets();
             int parametersCount = _nodesDictionary["Parameters"].Count;
             Info = $"Обработка окончена. {BadDiscreteSets.Sum(x => x.ParameterIds.Count)} параметров без описания," +
                 $" с описанием - {parametersCount}.";
         }
 
-        private Dictionary<string, List<XmlNode>> GetNodesDictionary(string filePath)
+        private string GetErrorRowNumber(string message)
+        {
+            var regex = new Regex(@"(?<=строка )\d+(?=,)");
+            return regex.Match(message).Value;
+        }
+
+        private Dictionary<string, List<XmlNode>> GetNodesDictionary()
         {            
-            _checkingDocument.Load(filePath);
+            
             XmlElement rootElement = _checkingDocument.DocumentElement;
             var xmlNodesDictionary = new Dictionary<string, List<XmlNode>>();
             foreach (XmlNode node in rootElement.ChildNodes)
